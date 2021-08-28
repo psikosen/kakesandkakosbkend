@@ -16,9 +16,9 @@ class DatabaseManagement{
         this.con = mysql.createPool({
             connectionLimit:10,
             host:HOSTNAME,//'162.241.239.105',
-            user:USER,//'servink3_datekos',
-            password:PASSWORD,//'&MO{@]f6926+',
-            database:DATABASE,//'servink3_dategame'
+            user:USER,
+            password:PASSWORD, 
+            database:DATABASE, 
         });
         this.pool = this.con;
     }
