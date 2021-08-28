@@ -6,8 +6,34 @@ class EventManager{
    GETEVENT(req,res,con){
       let json = req.body;
       let IEVENT_ID = json.EVENT_ID;
-      let query  = `call GETEVENT('${IEVENT_ID.trim()}')`;
+      let query  = `call GETEVENT('${IEVENT_ID}')`;
           mysqlCall(con,res, 'GETEVENT', query, 'No event with that id exists', true);
+   }
+
+   UPDATEEVENT(req, res, con){
+    let json = req.body;
+    let type = json.TYPE;
+    let INPUTVAL = json.INPUTVAL;
+    let CUSTOMERID = json.CUSTOMERID;
+    let PROCEDURENAME = json.PROCEDURENAME;
+
+    switch(type){
+        case 'EVENT_DATE':
+              PROCEDURENAME = 'CHANGEEVENT_DATE';
+        break;
+        case 'EVENT_CONTACTNUMBER':
+              PROCEDURENAME = 'CHANGEEVENT_CONTACTNUMBER';
+        break;
+        case 'EVENT_ADDRESS':
+              PROCEDURENAME = 'CHANGEEVENT_ADDRESS';
+        break;
+        case 'EVENT_TIME':
+              PROCEDURENAME = 'CHANGEEVENT_TIME';
+    }
+
+    let query  = `call ${PROCEDURENAME}('${INPUTVAL}','${CUSTOMERID}')`;
+    console.log(query);
+        mysqlCall(con,res, 'UPDATECUSTOMER', query, 'No customer with that id exists', false);
    }
 
    CREATEKAKESEVENT(req,res,con){   
@@ -20,26 +46,25 @@ class EventManager{
       let EVENT_TIME = json.EVENT_TIME;
  
 
-      let query  = `call CREATEKAKESEVENT('${json.EVENT_ID.trim()}',
-                                          '${json.EVENT_ORDERNUMBER.trim()}',
-                                          '${json.EVENT_ADDRESS.trim()}',
-                                          '${json.EVENT_CONTACTNUMBER.trim()}',
-                                          '${json.EVENT_DATE.trim()}',
-                                          '${json.EVENT_TIME.trim()}')`;
-          mysqlCall(con, res, 'CREATEKAKESEVENT',query, 'Event Already Exists', true);
+      let query  = `call CREATEKAKESEVENT('${EVENT_ID}',
+                                          '${EVENT_ORDERNUMBER.trim()}',
+                                          '${EVENT_ADDRESS.trim()}',
+                                          '${EVENT_CONTACTNUMBER.trim()}',
+                                          '${EVENT_DATE}',
+                                          '${EVENT_TIME.trim()}')`;
+          mysqlCall(con, res, 'CREATEKAKESEVENT',query, 'CREATED', true);
    }
 
-   GETALLEVENTS(req,res,con){
-      let json = req.body;  
+   GETALLEVENTS(req,res,con){ 
       let query  = `call GETALLEVENTS()`; 
-          mysqlCall(con,res,'GETALLEVENTS',query, 'User does not exist', false); 
+          mysqlCall(con,res,'GETALLEVENTS',query, 'Fetching all events', false); 
    }
 
    DELETEEVENT(req,res,con){ 
       let json = req.body; 
       let IEVENT_ID = json.EVENT_ID; 
-      let query  = `call DELETEEVENT('${json.IEVENT_ID.trim()}')`; 
-          mysqlCall(con,res,'DELETEEVENT',query, 'User does not exist', false); 
+      let query  = `call DELETEEVENT('${IEVENT_ID}')`; 
+          mysqlCall(con,res,'DELETEEVENT',query, 'DELETE', false); 
    }
 }
 
@@ -57,7 +82,7 @@ function mysqlCall(con,res,type,query, errorMsg, getDataBack){
             }else{
                 console.log('<==============>');
                 console.log(results1);  
-          if(results1.length > 0){
+          if(results1.length > 0  || results1.affectedRows > 0){
             if(getDataBack){
                 res.send({
                           code:200,
@@ -66,9 +91,10 @@ function mysqlCall(con,res,type,query, errorMsg, getDataBack){
                           message: rtnMessage
                 });
             }else{
+               
                 res.send({
                     code:200,
-                    success:false,
+                    success:true,
                     message: rtnMessage
                 });
             }
