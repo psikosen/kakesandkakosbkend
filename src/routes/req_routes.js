@@ -22,50 +22,13 @@ let DatabaseManagment = require("./database/DatabaseManagement.js");
 let CustomerManager = require("./customers/CustomerManager");
 let EventManager = require("./events/EventManager.js");
 let Authentification = require("./Authentification.js"); 
+let ImageManagement = require("./ImageManagement.js"); 
 
-// End Points
+
+
 module.exports = function(app,db){ 
-	 app.use(bodyParser.json());
-	 app.use(bodyParser.urlencoded({extended:true}));
-	 app.use(busboy());
-	 app.use(express.static(path.join(__dirname, '../public')));
-	 app.use(function(req, res, next) {
-		  res.header('Access-Control-Allow-Origin', '*');
-		  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-		  res.header('Access-Control-Allow-Headers', 'Content-Type');
-		  next();
-	 });
-	 
-	 app.get('/api/customers',function(req,res){
-		  CustomerManager.GetAllCustomers(function(err,data){
-				if(err){
-					log.error(err);
-					res.status(500).send(err);
-				}else{
-					res.status(200).send(data);
-				}
-		  });
-	 });
-	 
-	 app.get('/api/customers/:id',function(req,res){
-		  CustomerManager.GetCustomer(req.params.id,function(err,data){
-				if(err){
-					log.error(err);
-					res.status(500).send(err);
-				}else{
-					res.status(200).send(data);
-				}
-		  });
-	 });
-	 
-	 app.post('/api/customers',function(req,res){
-		  CustomerManager.AddCustomer(req.body,function(err,data){
-				if(err){
-					log.error(err);
-					res.status(500).send(err);;
-     }});});
-
-	 app.use(bodyParser.urlencoded({ extended: true }));
+   app.use(express.json());
+   app.use(express.urlencoded({ extended: true }));
    app.use(busboy());
   
    app.post('/ADMINLOGIN',(req,res)=>{
@@ -75,6 +38,20 @@ module.exports = function(app,db){
         auth.ADMINLOGIN(req,res,con);
    }); 
    
+   app.get('/GETALLCUSTOMERS',(req,res)=>{
+    let con = new DatabaseManagment(); 
+    let cus = new CustomerManager();
+    console.log('working end  GETALLCUSTOMERS')
+        cus.GETALLCUSTOMERS(res, con);
+   });
+   
+   app.post('/UPDATECUSTOMER',(req,res)=>{
+    let con = new DatabaseManagment();
+    let cus = new CustomerManager();
+    console.log('working end point check if UPDATECUSTOMER')
+        cus.UPDATECUSTOMER(req,res,con);
+   });  
+
    app.post('/CHECKIFUSEREXISTS',(req,res)=>{
     let con = new DatabaseManagment();
     let cus = new CustomerManager();
@@ -87,13 +64,19 @@ module.exports = function(app,db){
     let cus = new CustomerManager();
     console.log('working end point   CUSTOMEREMAILADDESS')
         cus.CREATECUSTOMER(req,res,con);
-   }); 
-  
+   });  
    app.post('/GETCUSTOMER',(req,res)=>{
     let con = new DatabaseManagment();
     let cus = new CustomerManager();
-    console.log('working end      GETCUSTOMER')
+    console.log('working end GETCUSTOMER')
         cus.GETCUSTOMER(req,res,con);
+   }); 
+
+   app.post('/DELETECUSTOMER',(req,res)=>{
+    let con = new DatabaseManagment();
+    let cus = new CustomerManager();
+    console.log('working end DELETE CUSTOMER')
+        cus.DELETECUSTOMER(req,res,con);
    }); 
    
    app.post('/CREATEKAKESEVENT',(req,res)=>{
@@ -103,27 +86,122 @@ module.exports = function(app,db){
         evn.CREATEKAKESEVENT(req,res,con);
    });
 
+   app.post('/UPDATEEVENT',(req,res)=>{
+    let con = new DatabaseManagment(); 
+    let evn = new EventManager();
+    console.log('working end point check if UPDATEEVENT')
+        evn.UPDATEEVENT(req,res,con);
+   });  
+
    app.post('/GETEVENT',(req,res)=>{
     let con = new DatabaseManagment();
     let evn = new EventManager();
-    console.log('working end     GETEVENT')
+    console.log('working end - GETEVENT')
         evn.GETEVENT(req,res,con);
    });
 
-   app.post('/GETALLEVENTS',(req,res)=>{
+   app.get('/GETALLEVENTS',(req,res)=>{
     let con = new DatabaseManagment();
     let evn = new EventManager();
-    console.log('working end   GETALLEVENTS')
+    console.log('working end  - GETALLEVENTS')
         evn.GETALLEVENTS(req,res,con);
    });
-
+ 
    app.post('/DELETEEVENT',(req,res)=>{
     let con = new DatabaseManagment();
     let evn = new EventManager();
-    console.log('working end  DELETEEVENT')
+    console.log('working end  - DELETEEVENT')
         evn.DELETEEVENT(req,res,con);
    });
 
-  
+   app.post('/uploadImage', (req,res, next)=>{
+    console.log('Entering uploadImage');
+    upload(req, res, function (err) {
+       if (err instanceof multer.MulterError) {
+         // A Multer error occurred when uploading.
+       } else if (err) {
+         // An unknown error occurred when uploading.
+       }
+
+       var files = req.files;
+       console.log('==================================');
+       console.log(req.file);
+       console.log(req.params);
+       console.log('=================================');
+       console.log(req.body);
+       console.log('=================================');
+
+       let json = req.body; 
+       let folder = 'images';
+       let fileType = 'png';
+
+         
+       let path =`./${folder}/${json.ImageName}.${fileType}`;
+       console.log(path);
+
+           fs.writeFile(path, Buffer.from(files[0].buffer), function(err,fds){
+               if (err) throw err
+               console.log(fds);
+               console.log('File saved.'); 
+               
+              let im = new ImageManagement();
+              im.insertImg(con,res,{FOODNAME:files.FOODNAME,FOODNAMEFULLNAME: files.FOODNAMEFULLNAME, FOODIMG: path}); 
+         
+           });
+       console.log(files);
+       console.log(json);
+      });
+    });
+
+
+   app.post('/UPDATEUSRIMG',(req,res)=>{ 
+    let con = new DatabaseManagment(); 
+
+    upload(req, res, function (err) {
+       if (err instanceof multer.MulterError) {
+         // A Multer error occurred when uploading.
+       } else if (err) {
+         // An unknown error occurred when uploading.
+       } 
+   
+       var file = req.files;  
+       console.log(file);
+       if(file.length <= 0){
+          res.send({
+            code:400,
+            data:'No File Found',
+            success:false
+          });
+       }
+
+       console.log('================================='); 
+       console.log(file);
+       console.log(JSON.parse(req.body.info)); 
+       console.log('=================================');
+
+       let mainFile = file;
+       let files = JSON.parse(req.body.info); 
+       let folder = 'images';
+       let fileType = 'png'; 
+       let path =`./${folder}/${files.userid}.${fileType}`;
+
+       console.log(path); 
+       console.log(mainFile); 
+
+         if(mainFile.length > 0) 
+           fs.writeFile(path, Buffer.from(mainFile[0].buffer), function(err,fds){
+               if (err) throw err 
+                console.log('========');
+                console.log(err);
+                console.log(`${files.userid}.${fileType}`);
+
+               console.log('File saved.');
+               console.log(__dirname); 
+              let im = new ImageManagement();
+                  im.updateUsrImg(con,res,{FOODNAME:files.FOODNAME,FOODNAMEFULLNAME: files.FOODNAMEFULLNAME, FOODIMG: path}); 
+           });
+
+      });
+   });
 }
 
